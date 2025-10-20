@@ -1,0 +1,190 @@
+import clsx from 'clsx';
+import {flattenConnection, Image, Money} from '@shopify/hydrogen';
+import type {MoneyV2, Product} from '@shopify/hydrogen/storefront-api-types';
+import {useTranslation} from 'react-i18next';
+import type {ProductCardFragment} from 'storefrontapi.generated';
+import {Text} from '~/components/elements/Text';
+import {Link} from '~/components/elements/Link';
+import {Button} from '~/components/elements/Button';
+import {Rating} from '~/components/elements/Rating';
+import {AddToCartButton} from '~/components/elements/AddToCartButton';
+import {isDiscounted, isNewArrival} from '~/lib/utils';
+import {getProductPlaceholder} from '~/lib/placeholders';
+import {WishlistButton} from '~/components/wishlist/WishlistButton';
+import {CompareButton} from '~/components/compare/CompareButton';
+
+export function ProductCardV2({
+  product,
+  label,
+  className,
+  onClick,
+  quickAdd,
+}: {
+  product: ProductCardFragment;
+  label?: string;
+  className?: string;
+  onClick?: () => void;
+  quickAdd?: boolean;
+}) {
+  let cardLabel;
+  const {t} = useTranslation();
+  const cardProduct: Product = product?.variants
+    ? (product as Product)
+    : getProductPlaceholder();
+  if (!cardProduct?.variants?.nodes?.length) return null;
+
+  const firstVariant = flattenConnection(cardProduct.variants)[0];
+
+  if (!firstVariant) return null;
+  const {image, price, compareAtPrice} = firstVariant;
+
+  if (label) {
+    cardLabel = label;
+  } else if (isDiscounted(price as MoneyV2, compareAtPrice as MoneyV2)) {
+    cardLabel = t('global.sale');
+  } else if (isNewArrival(product.publishedAt)) {
+    cardLabel = t('global.new');
+  }
+
+  const styles = clsx('flex flex-col gap-3', className);
+
+  let swapImage = null;
+  if (product?.images?.edges?.length > 0) {
+    const url =
+      product?.images?.edges?.length > 1
+        ? product.images?.edges[1]?.node?.originalSrc
+        : product.images?.edges[0]?.node?.originalSrc;
+
+    swapImage = {
+      url,
+    };
+  }
+
+  const reviews = product?.reviews ? JSON.parse(product.reviews?.value) : [];
+
+  const bgCardLabel = {
+    [t('global.new')]: 'bg-sky-700',
+    [t('global.sale')]: 'bg-red-600',
+  };
+
+  return (
+    <div className={`${styles} productcard v2 relative overflow-hidden`}>
+      <div className="relative">
+        {' '}
+        <Link
+          onClick={onClick}
+          to={`/products/${product.handle}`}
+          prefetch="viewport"
+        >
+          <div className="aspect-square bg-primary/5">
+            {image && (
+              <div className="product-image flex w-full h-full">
+                <Image
+                  className={
+                    (swapImage ? 'image-front' : '') +
+                    ' aspect-square w-full object-cover'
+                  }
+                  sizes="(min-width: 64em) 25vw, (min-width: 48em) 30vw, 45vw"
+                  aspectRatio="1/1"
+                  data={image}
+                  width={250}
+                  alt={image.altText || product.title}
+                  loading={'lazy'}
+                />
+                {swapImage && (
+                  <Image
+                    className="image-back aspect-square w-full object-cover"
+                    sizes="(min-width: 64em) 25vw, (min-width: 48em) 30vw, 45vw"
+                    aspectRatio="1/1"
+                    data={swapImage || image}
+                    alt={image.altText || product.title}
+                    loading={'lazy'}
+                  />
+                )}
+              </div>
+            )}
+            {cardLabel && (
+              <Text
+                as="label"
+                size="fine"
+                className={
+                  `absolute z-10 text-white px-2 top-0 right-0 m-4 text-right text-sm ` +
+                  (bgCardLabel[cardLabel]
+                    ? bgCardLabel[cardLabel]
+                    : 'bg-red-600')
+                }
+              >
+                {cardLabel}
+              </Text>
+            )}
+          </div>
+        </Link>
+        <div className="absolute z-10 flex items-center bottom-4 right-4 gap-4">
+          <CompareButton handle={product.handle} />
+          <WishlistButton handle={product.handle} />
+        </div>
+      </div>
+      <div className="flex flex-col items-center flex-1 gap-1 text-center px-4">
+        <div className="flex items-center justify-between h-6 mt-1">
+          <div className="text-sm text-gray-600">{product.vendor}</div>
+        </div>
+        <div className="flex items-center gap-1 flex-1">
+          <Rating rating={Math.round(reviews.value)} />
+          {product?.rating_count?.value > 0 && (
+            <span className="text-sm">({product?.rating_count?.value})</span>
+          )}
+        </div>
+        <Link
+          onClick={onClick}
+          to={`/products/${product.handle}`}
+          className="w-full font-medium flex-1 min-h-12"
+        >
+          {product.title}
+        </Link>
+        <div className="flex gap-4">
+          <Text className="flex gap-2">
+            {isDiscounted(price as MoneyV2, compareAtPrice as MoneyV2) && (
+              <Money
+                data={compareAtPrice!}
+                as="span"
+                className="font-medium text-gray-500 line-through"
+              />
+            )}
+            <span
+              className={`${
+                isDiscounted(price as MoneyV2, compareAtPrice as MoneyV2) &&
+                'text-red-600'
+              } font-bold`}
+            >
+              <Money data={price!} />
+            </span>
+          </Text>
+        </div>
+      </div>
+      {firstVariant.availableForSale && (
+        <AddToCartButton
+          lines={[
+            {
+              quantity: 1,
+              merchandiseId: firstVariant.id,
+              selectedVariant: firstVariant
+            },
+          ]}
+          variant="secondary"
+          className="mt-2 btn-primary"
+        >
+          <Text as="span" className="flex items-center justify-center gap-2">
+            {t('global.addToCart')}
+          </Text>
+        </AddToCartButton>
+      )}
+      {!firstVariant.availableForSale && (
+        <Button variant="secondary" className="mt-2" disabled>
+          <Text as="span" className="flex items-center justify-center gap-2">
+            {t('global.soldOut')}
+          </Text>
+        </Button>
+      )}
+    </div>
+  );
+}
