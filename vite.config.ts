@@ -20,6 +20,7 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   ssr: {
+    external: ['nodemailer'],
     optimizeDeps: {
       include: [
         'geolib',

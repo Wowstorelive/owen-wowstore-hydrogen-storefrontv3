@@ -274,7 +274,7 @@ const BLOG_SITEMAP_QUERY = `#graphql
 
 const METAOBJECT_SITEMAP_QUERY = `#graphql
     query SitemapMetaobjects($page: Int!) {
-      sitemap(type: METAOBJECT_PAGE) {
+      sitemap(type: METAOBJECT) {
         resources(page: $page) {
           items {
             handle
@@ -315,7 +315,7 @@ query SitemapIndex {
       count
     }
   }
-  metaObjects: sitemap(type: METAOBJECT_PAGE) {
+  metaObjects: sitemap(type: METAOBJECT) {
     pagesCount {
       count
     }
