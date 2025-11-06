@@ -24,7 +24,7 @@ import {
   type SeoConfig,
 } from '@shopify/hydrogen';
 import invariant from 'tiny-invariant';
-import groq from 'groq';
+// import groq from 'groq'; // TODO: Removed Sanity CMS - using custom CMS
 import {toast, Toaster, ToastBar} from 'react-hot-toast';
 import {useChangeLanguage} from 'remix-i18next';
 import {useTranslation} from 'react-i18next';
@@ -38,9 +38,9 @@ import {NewsletterPopup} from '~/components/elements/NewsletterPopup';
 // import {LayoutSpring as PageLayout} from '~/components/layouts/spring/Layout';
 // import {LayoutSummer as PageLayout} from '~/components/layouts/summer/Layout';
 import {LayoutWinter as PageLayout} from '~/components/layouts/winter/Layout';
-import {SANITY_SETTINGS} from '~/data/sanity/settings';
-import {MAIN_MENU} from '~/data/sanity/menu';
-import {COLOR_THEME} from '~/data/sanity/colorTheme';
+// import {SANITY_SETTINGS} from '~/data/sanity/settings'; // TODO: Removed Sanity CMS
+// import {MAIN_MENU} from '~/data/sanity/menu'; // TODO: Removed Sanity CMS
+// import {COLOR_THEME} from '~/data/sanity/colorTheme'; // TODO: Removed Sanity CMS
 import {ColorTheme} from '~/components/ColorTheme';
 import favicon from '~/assets/favicon.svg';
 import {GenericError} from '~/components/GenericError';
@@ -111,18 +111,27 @@ async function loadCriticalData({request, context}: LoaderFunctionArgs) {
   const lang = storefront.i18n.language.toLowerCase();
   let currencyCode = context.storefront.i18n.currency || 'USD';
 
-  const sanityQuery = groq`
-    {
-      'settings': *[_type == "settings" && language == "${lang}"] {${SANITY_SETTINGS}},
-      'menu': *[_type == "menu" && language == "${lang}"] {${MAIN_MENU}} | order(position),
-      'colorTheme': *[_type == "colorTheme"] {${COLOR_THEME}}
-    }
-  `;
+  // TODO: Replace with custom CMS integration
+  // Sanity CMS removed - user has custom CMS system
+  // const sanityQuery = groq`...`;
+  // const sanityData = await context.sanity.fetch(sanityQuery);
 
-  const [layout, sanityData] = await Promise.all([
-    getLayoutData(context),
-    context.sanity.fetch(sanityQuery),
-  ]);
+  // Provide empty default data structure to prevent breaking the UI
+  const sanityData = {
+    settings: [{
+      header: {
+        favicon: {url: favicon},
+      },
+      newsletter: {
+        showPopup: false,
+      },
+      embedCode: null,
+    }],
+    menu: [],
+    colorTheme: [],
+  };
+
+  const layout = await getLayoutData(context);
 
   const seo = seoPayload.root({shop: layout.shop, url: request.url});
 

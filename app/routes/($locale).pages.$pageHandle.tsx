@@ -6,12 +6,12 @@ import {
 import {useLoaderData} from '@remix-run/react';
 import invariant from 'tiny-invariant';
 import {Suspense} from 'react';
-import groq from 'groq';
+// import groq from 'groq'; // TODO: Removed Sanity CMS - using custom CMS
 import {getSeoMeta} from '@shopify/hydrogen';
 import {PageHeader} from '~/components/elements/Text';
 import {routeHeaders} from '~/data/cache';
 import {seoPayload} from '~/lib/seo.server';
-import {PAGE} from '~/data/sanity/pages/page';
+// import {PAGE} from '~/data/sanity/pages/page'; // TODO: Removed Sanity CMS
 import {ModuleSection} from '~/components/ModuleSection';
 
 export const headers = routeHeaders;
@@ -24,19 +24,23 @@ export async function loader(args: LoaderFunctionArgs) {
 async function loadCriticalData({context, params, request}: LoaderFunctionArgs) {
   invariant(params.pageHandle, 'Missing page handle');
   const lang = context.storefront.i18n.language.toLowerCase();
-  const query = groq`
-    *[_type == "page" && language == "${lang}" && slug == "${params.pageHandle}"][0] {
-      ${PAGE}
-    }
-  `;
 
-  const [page] = await Promise.all([
-    context.sanity.fetch(query),
-  ]);
+  // TODO: Replace with custom CMS integration
+  // Sanity CMS removed - user has custom CMS system built on PostgreSQL
+  // const query = groq`...`;
+  // const page = await context.sanity.fetch(query);
 
-  if (!page) {
-    throw new Response(null, {status: 404});
-  }
+  // Provide default data structure
+  const page = {
+    title: params.pageHandle.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+    showTitle: true,
+    centerTitle: false,
+    modules: [],
+    seo: {
+      title: params.pageHandle.replace(/-/g, ' '),
+      description: '',
+    },
+  };
 
   return {
     page,

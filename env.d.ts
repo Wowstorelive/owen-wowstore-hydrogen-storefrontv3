@@ -9,7 +9,7 @@ import type {
 } from '@shopify/hydrogen';
 import type {Storefront, CustomerAccount} from '~/lib/type';
 import type {AppSession} from '~/lib/session.server';
-import type {Sanity} from 'hydrogen-sanity';
+// import type {Sanity} from 'hydrogen-sanity'; // TODO: Removed Sanity CMS - using custom CMS
 
 declare global {
   /**
@@ -31,15 +31,19 @@ declare global {
     PUBLIC_CHECKOUT_DOMAIN: string;
     PRIVATE_ADMIN_API_TOKEN: string;
     PRIVATE_ADMIN_API_VERSION: string;
-    SANITY_PROJECT_ID: string;
-    SANITY_DATASET: string;
-    SANITY_API_VERSION: string;
+    // TODO: Removed Sanity CMS - using custom CMS
+    // SANITY_PROJECT_ID: string;
+    // SANITY_DATASET: string;
+    // SANITY_API_VERSION: string;
     SENDGRID_API_KEY: string;
     SUPABASE_URL: string;
     SUPABASE_API_KEY: string;
     SUPABASE_PREFIX_BUCKET: string;
     SUPABASE_BUCKET_IMAGE_REVIEW: string;
     SUPABASE_BUCKET_RETURNS: string;
+    // PostgreSQL/PostgREST configuration
+    POSTGREST_URL?: string;
+    POSTGREST_API_KEY?: string;
   }
 }
 
@@ -53,7 +57,8 @@ declare module '@shopify/remix-oxygen' {
     storefront: Storefront;
     customerAccount: CustomerAccount;
     admin: AdminClient;
-    sanity: Sanity;
+    // TODO: Removed Sanity CMS - using custom CMS
+    // sanity: Sanity;
     cart: HydrogenCart;
     env: Env;
   }

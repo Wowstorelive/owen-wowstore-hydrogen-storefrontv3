@@ -1,5 +1,5 @@
 import {useState, useEffect, useCallback, useMemo} from 'react';
-import groq from 'groq';
+// import groq from 'groq'; // TODO: Removed Sanity CMS - using custom CMS
 import {json, type MetaArgs, type LoaderFunctionArgs} from '@shopify/remix-oxygen';
 import {getSeoMeta} from '@shopify/hydrogen';
 import {useLoaderData} from '@remix-run/react';
@@ -23,10 +23,10 @@ import {
 } from '~/components/elements/Icon';
 
 import {seoPayload} from '~/lib/seo.server';
-import {
-  STORE_LOCATOR,
-  STORE_LOCATOR_SEARCH_BY_NAME,
-} from '~/data/sanity/pages/storeLocator';
+// import {
+//   STORE_LOCATOR,
+//   STORE_LOCATOR_SEARCH_BY_NAME,
+// } from '~/data/sanity/pages/storeLocator'; // TODO: Removed Sanity CMS
 import { useTranslation } from 'react-i18next';
 
 const dataSelected = [
@@ -45,26 +45,30 @@ const dataSelected = [
 ];
 
 export async function loader({request, context}: LoaderFunctionArgs) {
-  const sanityClient = context.sanity.client;
-  const query = groq`
-      *[slug == 'store-locator'][0]{
-        ${STORE_LOCATOR}
-      }
-    `;
+  // TODO: Replace with custom CMS integration
+  // Sanity CMS removed - user has custom CMS system built on PostgreSQL
+  // const sanityClient = context.sanity.client;
+  // const query = groq`...`;
+  // const page = await sanityClient.fetch(query);
 
-  const page = await sanityClient.fetch(query);
-  if (!page) {
-    throw new Response(null, {status: 404});
-  }
-  
+  // Provide default data structure
+  const page = {
+    title: 'Store Locator',
+    modules: [],
+    seo: {
+      title: 'Store Locator',
+      description: 'Find our stores near you',
+    },
+  };
+
   const seo = seoPayload.page({page, url: request.url});
-  const stores = page?.modules?.length > 0 ? page?.modules[0]?.stores : null;
+  const stores = null; // TODO: Load stores from PostgreSQL CMS
 
   return json({
     page,
     dataSelected,
     seo,
-    sanityClient,
+    sanityClient: null, // No Sanity client anymore
     stores,
   });
 }

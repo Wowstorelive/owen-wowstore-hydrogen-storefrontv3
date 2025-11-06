@@ -18,7 +18,7 @@ import {
   getSeoMeta,
 } from '@shopify/hydrogen';
 import invariant from 'tiny-invariant';
-import groq from 'groq';
+// import groq from 'groq'; // TODO: Removed Sanity CMS - using custom CMS
 import {useTranslation} from 'react-i18next';
 
 import i18next from '~/i18next.server';
@@ -33,7 +33,7 @@ import {ProductCard} from '~/components/cards/ProductCard';
 import {PAGINATION_SIZE} from '~/lib/const';
 import {routeHeaders} from '~/data/cache';
 import {seoPayload} from '~/lib/seo.server';
-import {COLLECTION} from '~/data/sanity/collection';
+// import {COLLECTION} from '~/data/sanity/collection'; // TODO: Removed Sanity CMS
 import type {CollectionDetailsQuery} from 'storefrontapi.generated';
 import type {SortParam} from '~/components/elements/SortFilter';
 import {ModuleSection} from '~/components/ModuleSection';
@@ -87,12 +87,15 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
 
   const seo = seoPayload.collection({collection, url: request.url});
 
-  const sanityQuery = groq`
-    *[_type == "collection" && store.slug.current == "${params.collectionHandle}"][0] {
-      ${COLLECTION}
-    }
-  `;
-  const collectionSanity = await context.sanity.fetch(sanityQuery);
+  // TODO: Replace with custom CMS integration
+  // Sanity CMS removed - user has custom CMS system built on PostgreSQL
+  // const sanityQuery = groq`...`;
+  // const collectionSanity = await context.sanity.fetch(sanityQuery);
+
+  // Provide empty default data structure
+  const collectionSanity = {
+    modules: [],
+  };
 
   return json({
     collection,

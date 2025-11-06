@@ -4,10 +4,10 @@ import {
   type LoaderFunctionArgs,
 } from '@shopify/remix-oxygen';
 import {useLoaderData} from '@remix-run/react';
-import groq from 'groq';
+// import groq from 'groq'; // TODO: Removed Sanity CMS - using custom CMS
 import {Suspense} from 'react';
 import {getSeoMeta} from '@shopify/hydrogen';
-import {HOME_PAGE} from '~/data/sanity/pages/home';
+// import {HOME_PAGE} from '~/data/sanity/pages/home'; // TODO: Removed Sanity CMS
 import {seoPayload} from '~/lib/seo.server';
 import {routeHeaders} from '~/data/cache';
 import {ModuleSection} from '~/components/ModuleSection';
@@ -36,15 +36,19 @@ async function loadCriticalData({context}: LoaderFunctionArgs) {
   const {language} = context.storefront.i18n;
   const lang = language.toLowerCase();
 
-  const query = groq`
-      *[_type == 'home' && language == "${lang}"][0]{
-        ${HOME_PAGE}
-      }
-    `;
+  // TODO: Replace with custom CMS integration
+  // Sanity CMS removed - user has custom CMS system
+  // const query = groq`...`;
+  // const homeData = await context.sanity.fetch(query);
 
-  const [homeData] = await Promise.all([
-    context.sanity.fetch(query),
-  ]);
+  // Provide empty default data structure to prevent breaking the UI
+  const homeData = {
+    modules: [],
+    seo: {
+      title: 'Home',
+      description: 'Welcome to our store',
+    },
+  };
 
   return {
     homeData,
