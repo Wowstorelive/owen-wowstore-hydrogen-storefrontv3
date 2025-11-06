@@ -68,13 +68,13 @@ import type {
   SellingPlanFragment,
 } from 'storefrontapi.generated';
 import {ValidateEmail} from '~/lib/utils';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+// import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export const headers = routeHeaders;
 
 export async function loader({params, request, context}: LoaderFunctionArgs) {
   const {productHandle} = params;
-  const {storefront, customerAccount, firestore} = context;
+  const {storefront, customerAccount} = context;
 
   const locale = storefront.i18n.language.toLowerCase();
   const t = await i18next.getFixedT(locale);
@@ -158,11 +158,13 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
     url: request.url,
   });
 
-  const productReviewRef = collection(firestore, 'product_review');
-  const q = query(productReviewRef, where('productHandle', '==', productHandle));
-  const querySnapshot = await getDocs(q);
-  const reviewProduct = querySnapshot.docs.map(doc => doc.data());
-  
+  // TODO: Migrate to PostgreSQL - Firebase not compatible with Oxygen edge workers
+  // const productReviewRef = collection(firestore, 'product_review');
+  // const q = query(productReviewRef, where('productHandle', '==', productHandle));
+  // const querySnapshot = await getDocs(q);
+  // const reviewProduct = querySnapshot.docs.map(doc => doc.data());
+  const reviewProduct = []; // Empty array until PostgreSQL migration
+
   return defer({
     variants,
     product,

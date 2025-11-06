@@ -1,10 +1,16 @@
-import {type ActionArgs} from '@shopify/remix-oxygen';
-import { base64ToArrayBuffer } from '~/lib/utils';
-import { v4 as uuidv4 } from 'uuid';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {json, type ActionArgs} from '@shopify/remix-oxygen';
+// import { base64ToArrayBuffer } from '~/lib/utils';
+// import { v4 as uuidv4 } from 'uuid';
+// import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export async function action({request, context}: ActionArgs) {
-  const {env, firebaseStorage} = context;
+  // TODO: Migrate to PostgreSQL - Firebase not compatible with Oxygen edge workers
+  return json({
+    error: 'Returns feature temporarily unavailable. Migrating to PostgreSQL.',
+    status: 'coming_soon'
+  }, { status: 503 });
+
+  // const {env, firebaseStorage} = context;
   const [payload]: any = await Promise.all([request.json()]);
   const {orderId, returnLineItems, files, orderName} = payload;
 
