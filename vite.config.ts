@@ -20,7 +20,12 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   ssr: {
-    external: ['nodemailer'],
+    external: [
+      'nodemailer',
+      '@google-cloud/firestore',
+      '@google-cloud/storage',
+      'pg',
+    ],
     optimizeDeps: {
       include: [
         'geolib',
@@ -38,15 +43,15 @@ export default defineConfig({
       '@headlessui/react',
       'typographic-base',
       'react-intersection-observer',
-      'react-use/esm/useScroll',
-      'react-use/esm/useDebounce',
-      'react-use/esm/useWindowScroll',
-      'fast-deep-equal',
     ],
   },
   build: {
-    // Allow a strict Content-Security-Policy
-    // withtout inlining assets as base64:
-    assetsInlineLimit: 0,
+    rollupOptions: {
+      external: [
+        '@google-cloud/firestore',
+        '@google-cloud/storage',
+        'pg',
+      ],
+    },
   },
 });
