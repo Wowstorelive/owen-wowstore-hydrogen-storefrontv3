@@ -1,6 +1,6 @@
 // Virtual entry point for the app
 import {storefrontRedirect} from '@shopify/hydrogen';
-import {createRequestHandler} from '@shopify/hydrogen/oxygen';
+import {createRequestHandler} from '@shopify/remix-oxygen';
 import {createHydrogenRouterContext} from '~/lib/context';
 
 /**
@@ -25,7 +25,7 @@ export default {
        */
       const handleRequest = createRequestHandler({
         // eslint-disable-next-line import/no-unresolved
-        build: await import('virtual:react-router/server-build'),
+        build: await import('virtual:remix/server-build'),
         mode: process.env.NODE_ENV,
         getLoadContext: () => hydrogenContext,
       });
