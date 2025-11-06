@@ -1,22 +1,11 @@
 // Virtual entry point for the app
-import * as remixBuild from 'virtual:remix/server-build';
-import {
-  createRequestHandler,
-  getStorefrontHeaders,
-} from '@shopify/remix-oxygen';
-import {
-  cartGetIdDefault,
-  cartSetIdDefault,
-  createCartHandler,
-  createStorefrontClient,
-  storefrontRedirect,
-  createCustomerAccountClient,
-} from '@shopify/hydrogen';
+import {storefrontRedirect} from '@shopify/hydrogen';
+import {createRequestHandler} from '@shopify/hydrogen/oxygen';
+import {createHydrogenRouterContext} from '~/lib/context';
 
-import {AppSession} from '~/lib/session.server';
-import {getLocaleFromRequest} from '~/lib/utils';
-import {createAdminClient} from '~/lib/adminClient';
-
+/**
+ * Export a fetch handler in module format.
+ */
 export default {
   async fetch(
     request: Request,
@@ -24,72 +13,43 @@ export default {
     executionContext: ExecutionContext,
   ): Promise<Response> {
     try {
-      const waitUntil = (p: Promise<any>) => executionContext.waitUntil(p);
-      const [cache, session] = await Promise.all([
-        caches.open('hydrogen'),
-        AppSession.init(request, [env.SESSION_SECRET]),
-      ]);
+      const hydrogenContext = await createHydrogenRouterContext(
+        request,
+        env,
+        executionContext,
+      );
 
+      /**
+       * Create a Remix request handler and pass
+       * Hydrogen's Storefront client to the loader context.
+       */
       const handleRequest = createRequestHandler({
-        build: remixBuild,
+        // eslint-disable-next-line import/no-unresolved
+        build: await import('virtual:react-router/server-build'),
         mode: process.env.NODE_ENV,
-        getLoadContext: () => ({
-          session,
-          waitUntil,
-          storefront: createStorefrontClient({
-            cache,
-            waitUntil,
-            i18n: getLocaleFromRequest(request),
-            publicStorefrontToken: env.PUBLIC_STOREFRONT_API_TOKEN,
-            privateStorefrontToken: env.PRIVATE_STOREFRONT_API_TOKEN,
-            storeDomain: env.PUBLIC_STORE_DOMAIN,
-            storefrontId: env.PUBLIC_STOREFRONT_ID,
-            storefrontHeaders: getStorefrontHeaders(request),
-          }),
-          admin: createAdminClient({
-            privateAdminToken: env.PRIVATE_ADMIN_API_TOKEN,
-            storeDomain: env.PUBLIC_STORE_DOMAIN,
-            adminApiVersion: env.PRIVATE_ADMIN_API_VERSION || '2024-10',
-          }),
-          customerAccount: createCustomerAccountClient({
-            waitUntil,
-            request,
-            session,
-            customerAccountId: env.PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID,
-            customerAccountUrl: env.PUBLIC_CUSTOMER_ACCOUNT_API_URL,
-          }),
-          cart: createCartHandler({
-            storefront: createStorefrontClient({
-              cache,
-              waitUntil,
-              i18n: getLocaleFromRequest(request),
-              publicStorefrontToken: env.PUBLIC_STOREFRONT_API_TOKEN,
-              privateStorefrontToken: env.PRIVATE_STOREFRONT_API_TOKEN,
-              storeDomain: env.PUBLIC_STORE_DOMAIN,
-              storefrontId: env.PUBLIC_STOREFRONT_ID,
-              storefrontHeaders: getStorefrontHeaders(request),
-            }),
-            getCartId: cartGetIdDefault(request.headers),
-            setCartId: cartSetIdDefault(),
-            cartQueryFragment: CART_QUERY_FRAGMENT,
-          }),
-          env,
-        }),
+        getLoadContext: () => hydrogenContext,
       });
 
       const response = await handleRequest(request);
 
+      if (hydrogenContext.session.isPending) {
+        response.headers.set(
+          'Set-Cookie',
+          await hydrogenContext.session.commit(),
+        );
+      }
+
       if (response.status === 404) {
-        return storefrontRedirect({request, response, storefront: createStorefrontClient({
-          cache,
-          waitUntil,
-          i18n: getLocaleFromRequest(request),
-          publicStorefrontToken: env.PUBLIC_STOREFRONT_API_TOKEN,
-          privateStorefrontToken: env.PRIVATE_STOREFRONT_API_TOKEN,
-          storeDomain: env.PUBLIC_STORE_DOMAIN,
-          storefrontId: env.PUBLIC_STOREFRONT_ID,
-          storefrontHeaders: getStorefrontHeaders(request),
-        })});
+        /**
+         * Check for redirects only when there's a 404 from the app.
+         * If the redirect doesn't exist, then `storefrontRedirect`
+         * will pass through the 404 response.
+         */
+        return storefrontRedirect({
+          request,
+          response,
+          storefront: hydrogenContext.storefront,
+        });
       }
 
       return response;
@@ -99,118 +59,3 @@ export default {
     }
   },
 };
-
-interface Env {
-  SESSION_SECRET: string;
-  PUBLIC_STOREFRONT_API_TOKEN: string;
-  PRIVATE_STOREFRONT_API_TOKEN: string;
-  PUBLIC_STORE_DOMAIN: string;
-  PUBLIC_STOREFRONT_ID: string;
-  PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID: string;
-  PUBLIC_CUSTOMER_ACCOUNT_API_URL: string;
-  PRIVATE_ADMIN_API_TOKEN: string;
-  PRIVATE_ADMIN_API_VERSION: string;
-}
-
-const CART_QUERY_FRAGMENT = `#graphql
-  fragment Money on MoneyV2 {
-    currencyCode
-    amount
-  }
-  fragment CartLine on CartLine {
-    id
-    quantity
-    attributes {
-      key
-      value
-    }
-    cost {
-      totalAmount {
-        ...Money
-      }
-      amountPerQuantity {
-        ...Money
-      }
-      compareAtAmountPerQuantity {
-        ...Money
-      }
-    }
-    merchandise {
-      ... on ProductVariant {
-        id
-        availableForSale
-        compareAtPrice {
-          ...Money
-        }
-        price {
-          ...Money
-        }
-        requiresShipping
-        title
-        image {
-          id
-          url
-          altText
-          width
-          height
-        }
-        product {
-          handle
-          title
-          id
-        }
-        selectedOptions {
-          name
-          value
-        }
-      }
-    }
-  }
-  fragment CartApiQuery on Cart {
-    id
-    checkoutUrl
-    totalQuantity
-    buyerIdentity {
-      countryCode
-      customer {
-        id
-        email
-        firstName
-        lastName
-        displayName
-      }
-      email
-      phone
-    }
-    lines(first: $numCartLines) {
-      edges {
-        node {
-          ...CartLine
-        }
-      }
-    }
-    cost {
-      subtotalAmount {
-        ...Money
-      }
-      totalAmount {
-        ...Money
-      }
-      totalDutyAmount {
-        ...Money
-      }
-      totalTaxAmount {
-        ...Money
-      }
-    }
-    note
-    attributes {
-      key
-      value
-    }
-    discountCodes {
-      code
-      applicable
-    }
-  }
-`;
