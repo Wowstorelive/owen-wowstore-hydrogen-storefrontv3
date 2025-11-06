@@ -1,6 +1,7 @@
 import {createHydrogenContext} from '@shopify/hydrogen';
 import {AppSession} from '~/lib/session.server';
 import {CART_QUERY_FRAGMENT} from '~/data/fragments';
+import {createPostgresService} from '~/lib/postgres.service';
 
 /**
  * The context implementation used in this template is the new RR 7.9.x
@@ -38,5 +39,11 @@ export async function createHydrogenRouterContext(
     },
   });
 
-  return hydrogenContext;
+  // Add PostgreSQL service to context
+  const postgres = createPostgresService(env);
+
+  return {
+    ...hydrogenContext,
+    postgres,
+  };
 }
